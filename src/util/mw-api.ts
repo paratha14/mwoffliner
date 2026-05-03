@@ -7,23 +7,9 @@ import RedisStore from '../RedisStore.js'
 import MediaWiki from '../MediaWiki.js'
 import { cleanupAxiosError } from './misc.js'
 
-// HTTP servers typically limit URLs to ~8000 bytes. The full URL includes
-// the base URL, other query params, and continuation params (~500-600 bytes
-// overhead). This limit applies only to the "titles=" portion of the query.
 const MAX_TITLES_PARAM_SIZE = 7400
 const MAX_BATCH_SIZE = 50
 
-/**
- * Trims a batch of article IDs so the encoded "titles" query parameter
- * stays within MAX_TITLES_PARAM_SIZE bytes.
- *
- * Uses URLSearchParams (not encodeURIComponent) because that is what
- * buildQueryURL uses internally — they differ for characters like
- * `(`, `)`, `!`, `~`, `'` which URLSearchParams encodes as 3 bytes
- * while encodeURIComponent leaves them as 1 byte.
- *
- * Exported so unit tests can import and exercise the real function.
- */
 export function trimArticleBatch(articleIds: string[]): string[] {
   const batch = articleIds.slice(0, MAX_BATCH_SIZE)
   while (batch.length > 1 && new URLSearchParams({ titles: batch.join('|') }).toString().length > MAX_TITLES_PARAM_SIZE) {
